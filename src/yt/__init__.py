@@ -15,12 +15,13 @@ import argparse
 # Define possible player modes.
 MPLAYER_MODE="mplayer"
 OMXPLAYER_MODE="omxplayer"
+OMXPLAYERLOCAL_MODE="omxplayerlocal"
 
 def main():
 
     # Allow the user to specify whether to use mplayer or omxplayer for playing videos.
     parser = argparse.ArgumentParser(prog='yt',formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("--player",default=MPLAYER_MODE,choices=[MPLAYER_MODE,OMXPLAYER_MODE],help="specifies what program to use to play videos")
+    parser.add_argument("--player",default=MPLAYER_MODE,choices=[MPLAYER_MODE,OMXPLAYER_MODE,OMXPLAYERLOCAL_MODE],help="specifies what program to use to play videos")
    
     args = parser.parse_args(sys.argv[1:])
 
@@ -375,11 +376,13 @@ def play_url(url,player):
         sys.stderr.write(err)
         raise RuntimeError('Error getting URL.')
 
-    assert player in [MPLAYER_MODE,OMXPLAYER_MODE]
+    assert player in [MPLAYER_MODE,OMXPLAYER_MODE,OMXPLAYERLOCAL_MODE]
     if player == MPLAYER_MODE:
         play_url_mplayer(url)
+    elif player == OMXPLAYER_MODE:
+		play_url_omxplayer(url)
     else:
-        play_url_omxplayer(url)
+        play_url_omxplayerlocal(url)
     
 def play_url_mplayer(url):
     player = subprocess.Popen(
@@ -390,6 +393,12 @@ def play_url_mplayer(url):
 def play_url_omxplayer(url):
     player = subprocess.Popen(
             ['omxplayer', '-ohdmi', url.decode('UTF-8').strip()],
+            stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+    player.wait()
+
+def play_url_omxplayerlocal(url):
+    player = subprocess.Popen(
+            ['omxplayer', url.decode('UTF-8').strip()],
             stdout = subprocess.PIPE, stderr = subprocess.PIPE)
     player.wait()
 
