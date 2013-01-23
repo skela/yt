@@ -11,6 +11,8 @@ import sys
 import urllib
 import urllib2
 import argparse
+import os
+import ConfigParser
 
 # Define possible player modes.
 MPLAYER_MODE="mplayer"
@@ -19,9 +21,21 @@ OMXPLAYERLOCAL_MODE="omxplayerlocal"
 
 def main():
 
-    # Allow the user to specify whether to use mplayer or omxplayer for playing videos.
+    # Read default settings, if they are there.
+    # If they are not there, or is set to something invalid, default to mplayer.
+    config = ConfigParser.RawConfigParser()
+    config_file = os.path.expanduser('~/.config/yt')
+    try:
+        config.read(config_file)
+        DEFAULT_MODE = config.get('General', 'player')
+        if DEFAULT_MODE not in [MPLAYER_MODE, OMXPLAYER_MODE, OMXPLAYERLOCAL_MODE]:
+            DEFAULT_MODE = MPLAYER_MODE
+    except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+        DEFAULT_MODE = MPLAYER_MODE        
+
+    # Allow the user to specify whether to override the default player setting.
     parser = argparse.ArgumentParser(prog='yt',formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("--player",default=MPLAYER_MODE,choices=[MPLAYER_MODE,OMXPLAYER_MODE,OMXPLAYERLOCAL_MODE],help="specifies what program to use to play videos")
+    parser.add_argument("--player",default=DEFAULT_MODE,choices=[MPLAYER_MODE,OMXPLAYER_MODE,OMXPLAYERLOCAL_MODE],help="specifies what program to use to play videos")
    
     args = parser.parse_args(sys.argv[1:])
 
