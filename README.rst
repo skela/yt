@@ -32,8 +32,10 @@ Configuration
 The default player can be set in a ~/.config/yt settings file.  The format of the
 settings file should be like this (example for setting omxplayer as the default):
 
-[General]
-player = omxplayer
+::
+
+    [General]
+    player = omxplayer
 
 Valid options are ``mplayer``, ``omxplayer`` and ``omxplayerlocal``, for setting
 the default player to mplayer, omxplayer using the hdmi audio output and omxplayer
