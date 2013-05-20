@@ -87,7 +87,9 @@ class Ui(object):
         try:
             curses.curs_set(index)
         except:
-            print("failed to set cursor")
+            x=1
+            #self._show_message("Failed to set cursor")
+            #print ("Failed to set cursor")
 
     def _curses_main(self, scr):
         curses.noecho()
@@ -403,20 +405,22 @@ def play_url(url,player):
     else:
         play_url_omxplayer(url)
     
+def play_url_subprocess(opts):
+    player = subprocess.Popen(
+            opts,
+            stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+    player.wait()
+    
 def play_url_mplayer(url):
     fs = ''
     if should_play_video_in_fullscreen():
         fs = '-fs'
-    player = subprocess.Popen(
-            ['mplayer', '-quiet', fs, '--', url.decode('UTF-8').strip()],
-            stdout = subprocess.PIPE, stderr = subprocess.PIPE)
-    player.wait()
-        
+    opts = ['mplayer', '-quiet', fs, '--', url.decode('UTF-8').strip()]
+    play_url_subprocess(opts)
+
 def play_url_omxplayer(url):
-    player = subprocess.Popen(
-            ['omxplayer', '-ohdmi', url.decode('UTF-8').strip()],
-            stdout = subprocess.PIPE, stderr = subprocess.PIPE)
-    player.wait()
+    opts = ['omxplayer', '-ohdmi', url.decode('UTF-8').strip()]
+    play_url_subprocess(opts)
 
 def search(terms):
     def fetch_cb(start, maxresults, ordering):
