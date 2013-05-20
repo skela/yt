@@ -22,7 +22,7 @@ def main():
     """
 
     # Allow the user to specify whether to use mplayer or omxplayer for playing videos.
-    parser = argparse.ArgumentParser(prog='yt',formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(prog='ytb',formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--player",default=MPLAYER_MODE,choices=[MPLAYER_MODE,OMXPLAYER_MODE],help="specifies what program to use to play videos")
    
     args = parser.parse_args(sys.argv[1:])
@@ -83,6 +83,12 @@ class Ui(object):
         # Start the curses main loop
         curses.wrapper(self._curses_main)
 
+    def curs_set(self,index):
+        try:
+            curses.curs_set(index)
+        except:
+            print("failed to set cursor")
+
     def _curses_main(self, scr):
         curses.noecho()
         self._screen = scr
@@ -94,7 +100,7 @@ class Ui(object):
             raise ScreenSizeError()
 
         # Initialise the display
-        curses.curs_set(0)
+        self.curs_set(0)
         curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
         curses.init_pair(2, curses.COLOR_WHITE, curses.COLOR_BLACK)
         curses.init_pair(3, curses.COLOR_CYAN, curses.COLOR_BLACK)
@@ -147,14 +153,14 @@ class Ui(object):
         self._help_bar.refresh()
         input_win = curses.newwin(1, w-len(prompt)-2, h-1, len(prompt)+2)
         input_win.bkgd(' ', self._bar_attr)
-        curses.curs_set(1)
+        self.curs_set(1)
         curses.echo()
         try:
             s = input_win.getstr(0,0)
         except KeyboardInterrupt:
             s = None
         curses.noecho()
-        curses.curs_set(0)
+        self.curs_set(0)
         return s
 
     def _get_feed(self, start, count):
@@ -381,6 +387,9 @@ def number(n):
         return '%.1fk' % (n/1000.0,)
     return '%.1fM' % (n//1000000.0,)
 
+def should_play_video_in_fullscreen():
+    return False
+
 def play_url(url,player):
     yt_dl = subprocess.Popen(['youtube-dl', '-g', url], stdout = subprocess.PIPE, stderr = subprocess.PIPE)
     (url, err) = yt_dl.communicate()
@@ -395,8 +404,11 @@ def play_url(url,player):
         play_url_omxplayer(url)
     
 def play_url_mplayer(url):
+    fs = ''
+    if should_play_video_in_fullscreen():
+        fs = '-fs'
     player = subprocess.Popen(
-            ['mplayer', '-quiet', '-fs', '--', url.decode('UTF-8').strip()],
+            ['mplayer', '-quiet', fs, '--', url.decode('UTF-8').strip()],
             stdout = subprocess.PIPE, stderr = subprocess.PIPE)
     player.wait()
         
