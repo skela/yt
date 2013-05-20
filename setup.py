@@ -34,8 +34,8 @@ setup(name='whitey',
     entry_points={
         'console_scripts':
             [
-                'yt=yt:main',
-                'pi-yt=yt:main_with_omxplayer'
+                'ytb=ytb:main',
+                'pi-yt=ytb:main_with_omxplayer'
             ]
     }
 )
