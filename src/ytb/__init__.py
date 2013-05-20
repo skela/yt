@@ -11,19 +11,34 @@ import sys
 import urllib
 import urllib2
 import argparse
+import os
+import ConfigParser
 
 # Define possible player modes.
 MPLAYER_MODE="mplayer"
 OMXPLAYER_MODE="omxplayer"
+OMXPLAYERLOCAL_MODE="omxplayerlocal"
 
 def main():
     """
     Launch yt, allowing user to specify player.
     """
 
-    # Allow the user to specify whether to use mplayer or omxplayer for playing videos.
-    parser = argparse.ArgumentParser(prog='ytb',formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("--player",default=MPLAYER_MODE,choices=[MPLAYER_MODE,OMXPLAYER_MODE],help="specifies what program to use to play videos")
+    # Read default settings, if they are there.
+    # If they are not there, or is set to something invalid, default to mplayer.
+    config = ConfigParser.RawConfigParser()
+    config_file = os.path.expanduser('~/.config/yt')
+    try:
+        config.read(config_file)
+        DEFAULT_MODE = config.get('General', 'player')
+        if DEFAULT_MODE not in [MPLAYER_MODE, OMXPLAYER_MODE, OMXPLAYERLOCAL_MODE]:
+            DEFAULT_MODE = MPLAYER_MODE
+    except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+        DEFAULT_MODE = MPLAYER_MODE        
+
+    # Allow the user to specify whether to override the default player setting.
+    parser = argparse.ArgumentParser(prog='yt',formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("--player",default=DEFAULT_MODE,choices=[MPLAYER_MODE,OMXPLAYER_MODE,OMXPLAYERLOCAL_MODE],help="specifies what program to use to play videos")
    
     args = parser.parse_args(sys.argv[1:])
 
@@ -399,11 +414,13 @@ def play_url(url,player):
         sys.stderr.write(err)
         raise RuntimeError('Error getting URL.')
 
-    assert player in [MPLAYER_MODE,OMXPLAYER_MODE]
+    assert player in [MPLAYER_MODE,OMXPLAYER_MODE,OMXPLAYERLOCAL_MODE]
     if player == MPLAYER_MODE:
         play_url_mplayer(url)
+    elif player == OMXPLAYER_MODE:
+		play_url_omxplayer(url)
     else:
-        play_url_omxplayer(url)
+        play_url_omxplayerlocal(url)
     
 def play_url_subprocess(opts):
     player = subprocess.Popen(
@@ -421,6 +438,12 @@ def play_url_mplayer(url):
 def play_url_omxplayer(url):
     opts = ['omxplayer', '-ohdmi', url.decode('UTF-8').strip()]
     play_url_subprocess(opts)
+
+def play_url_omxplayerlocal(url):
+    player = subprocess.Popen(
+            ['omxplayer', url.decode('UTF-8').strip()],
+            stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+    player.wait()
 
 def search(terms):
     def fetch_cb(start, maxresults, ordering):

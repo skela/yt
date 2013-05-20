@@ -46,19 +46,26 @@ From GitHub
     # Ensure using latest version of youtube-dl to keep up with YouTube API changes
     sudo youtube-dl -U
 
-    # Install from GitHub
-    sudo apt-get install python-setuptools
-    git checkout git@github.com:rjw57/yt.git
-    cd yt
-    sudo python setup.py install
+    optional arguments:
+      -h, --help            show this help message and exit
+      --player {mplayer,omxplayer}
+                            specifies what program to use to play videos (default:
+                        mplayer)
 
-One line install for the Raspberry Pi
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Configuration
+-------------
+The default player can be set in a ~/.config/yt settings file.  The format of the
+settings file should be like this (example for setting omxplayer as the default):
 
 ::
 
-    curl -L https://github.com/rjw57/yt/raw/master/tools/install-pi.sh | sh
-                        
+    [General]
+    player = omxplayer
+
+Valid options are ``mplayer``, ``omxplayer`` and ``omxplayerlocal``, for setting
+the default player to mplayer, omxplayer using the hdmi audio output and omxplayer
+using the local audio output, respectively.
+
 Dependancies
 ------------
 
