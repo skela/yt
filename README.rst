@@ -13,7 +13,7 @@ Usage
 
 Launch using ``mplayer`` with::
 
-    yt
+    ytb
 
 or, if you're using a Raspberry Pi, using ``omxplayer``::
 
@@ -54,7 +54,7 @@ From GitHub
 
 Configuration
 -------------
-The default player can be set in a ~/.config/yt settings file.  The format of the
+The default player can be set in a ~/.ytbrc settings file.  The format of the
 settings file should be like this (example for setting omxplayer as the default):
 
 ::
