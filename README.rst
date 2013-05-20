@@ -61,7 +61,8 @@ settings file should be like this (example for setting omxplayer as the default)
 
     [General]
     player = omxplayer
-
+	fullscreen = true
+	
 Valid options are ``mplayer``, ``omxplayer`` and ``omxplayerlocal``, for setting
 the default player to mplayer, omxplayer using the hdmi audio output and omxplayer
 using the local audio output, respectively.

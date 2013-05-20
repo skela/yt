@@ -19,6 +19,16 @@ MPLAYER_MODE="mplayer"
 OMXPLAYER_MODE="omxplayer"
 OMXPLAYERLOCAL_MODE="omxplayerlocal"
 
+def config_get_fullscreen_setting(config,default):
+    use_fullscreen = default
+    try:
+        fs = config.get('General','fullscreen')
+        if fs=='True' or fs=='true' or fs=='1' or fs=='TRUE':
+            use_fullscreen = True
+    except:
+        use_fullscreen = default
+    return use_fullscreen
+
 def main():
     """
     Launch yt, allowing user to specify player.
@@ -32,17 +42,20 @@ def main():
         config.read(config_file)
         DEFAULT_MODE = config.get('General', 'player')
         if DEFAULT_MODE not in [MPLAYER_MODE, OMXPLAYER_MODE, OMXPLAYERLOCAL_MODE]:
-            DEFAULT_MODE = MPLAYER_MODE
+            DEFAULT_MODE = MPLAYER_MODE        
     except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
         DEFAULT_MODE = MPLAYER_MODE        
+    
+    DEFAULT_FULLSCREEN = config_get_fullscreen_setting(config,False)
 
     # Allow the user to specify whether to override the default player setting.
-    parser = argparse.ArgumentParser(prog='yt',formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(prog='ytb',formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--player",default=DEFAULT_MODE,choices=[MPLAYER_MODE,OMXPLAYER_MODE,OMXPLAYERLOCAL_MODE],help="specifies what program to use to play videos")
+    parser.add_argument("--fullscreen",default=DEFAULT_FULLSCREEN,choices=["true","false"],help="specifies whether a video should be started in fullscreen or not")
    
     args = parser.parse_args(sys.argv[1:])
 
-    ui = Ui(args.player)
+    ui = Ui(Settings(args.player,args.fullscreen))
     ui.run()
 
 def main_with_omxplayer():
@@ -52,7 +65,7 @@ def main_with_omxplayer():
 
     parser = argparse.ArgumentParser(prog='pi-yt')
 
-    ui = Ui(OMXPLAYER_MODE)
+    ui = Ui(Settings(OMXPLAYER_MODE,True))
     ui.run()
 
 class ScreenSizeError(Exception):
@@ -62,8 +75,19 @@ class ScreenSizeError(Exception):
     def __str__(self):
         return m
 
+class Settings(object):
+    def __init__(self,player,use_fullscreen):
+        self._player = player
+        self._use_fullscreen = use_fullscreen
+        
+    def player(self):
+        return self._player
+    
+    def use_fullscreen(self):
+        return self._use_fullscreen
+
 class Ui(object):
-    def __init__(self,player):
+    def __init__(self,settings):
         # A cache of the last feed result
         self._last_feed = None
 
@@ -88,8 +112,10 @@ class Ui(object):
         }
         
         # Which player to use for playing videos.
-        self._player = player
-
+        self._player = settings.player()
+        
+        self._settings = settings
+        
     def run(self):
         # Get the locale encoding
         locale.setlocale(locale.LC_ALL, '')
@@ -302,7 +328,7 @@ class Ui(object):
         item = self._items[idx]
         url = item['player']['default']
         self._show_message('Playing ' + url)
-        play_url(url,self._player)
+        play_url(url,self._settings)
 
     def _show_video_items(self, items):
         # Get size of window and maximum number of items per page
@@ -404,19 +430,18 @@ def number(n):
         return '%.1fk' % (n/1000.0,)
     return '%.1fM' % (n//1000000.0,)
 
-def should_play_video_in_fullscreen():
-    return False
-
-def play_url(url,player):
+def play_url(url,settings):
     yt_dl = subprocess.Popen(['youtube-dl', '-g', url], stdout = subprocess.PIPE, stderr = subprocess.PIPE)
     (url, err) = yt_dl.communicate()
     if yt_dl.returncode != 0:
         sys.stderr.write(err)
         raise RuntimeError('Error getting URL.')
 
+    player = settings.player()
+
     assert player in [MPLAYER_MODE,OMXPLAYER_MODE,OMXPLAYERLOCAL_MODE]
     if player == MPLAYER_MODE:
-        play_url_mplayer(url)
+        play_url_mplayer(url,settings)
     elif player == OMXPLAYER_MODE:
 		play_url_omxplayer(url)
     else:
@@ -428,9 +453,9 @@ def play_url_subprocess(opts):
             stdout = subprocess.PIPE, stderr = subprocess.PIPE)
     player.wait()
     
-def play_url_mplayer(url):
+def play_url_mplayer(url,settings):
     fs = ''
-    if should_play_video_in_fullscreen():
+    if settings.use_fullscreen():
         fs = '-fs'
     opts = ['mplayer', '-quiet', fs, '--', url.decode('UTF-8').strip()]
     play_url_subprocess(opts)
