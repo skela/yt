@@ -27,7 +27,7 @@ def main():
     # Read default settings, if they are there.
     # If they are not there, or is set to something invalid, default to mplayer.
     config = ConfigParser.RawConfigParser()
-    config_file = os.path.expanduser('~/.config/yt')
+    config_file = os.path.expanduser('~.ytbrc')
     try:
         config.read(config_file)
         DEFAULT_MODE = config.get('General', 'player')
